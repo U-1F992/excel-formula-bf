@@ -20,27 +20,27 @@ LET(UPDATEARRAY,LAMBDA(base,row,col,val,
     )
   ))
 ),
-LET(UPDATEARRAY.ADD,LAMBDA(base,row,col,val,
+LET(UPDATEARRAY_ADD,LAMBDA(base,row,col,val,
   UPDATEARRAY(base,row,col,INDEX(base,row,col)+val)
 ),
-LET(UPDATEARRAY.INCR,LAMBDA(base,row,col,
-  UPDATEARRAY.ADD(base,row,col,+1)
+LET(UPDATEARRAY_INCR,LAMBDA(base,row,col,
+  UPDATEARRAY_ADD(base,row,col,+1)
 ),
-LET(UPDATEARRAY.DECR,LAMBDA(base,row,col,
-  UPDATEARRAY.ADD(base,row,col,-1)
+LET(UPDATEARRAY_DECR,LAMBDA(base,row,col,
+  UPDATEARRAY_ADD(base,row,col,-1)
 ),
 
 LET(CHARAT,LAMBDA(str,pos,
   MID(str,pos,1)
 ),
-LET(CHARAT.HEAD,LAMBDA(str,
+LET(CHARAT_HEAD,LAMBDA(str,
   CHARAT(str,1)
 ),
 
 LET(REMOVE,LAMBDA(str,pos,cnt,
   LEFT(str,pos-1)&RIGHT(str,LEN(str)-(pos+cnt-1))
 ),
-LET(REMOVE.HEAD,LAMBDA(str,cnt,
+LET(REMOVE_HEAD,LAMBDA(str,cnt,
   REMOVE(str,1,cnt)
 ),
 
@@ -75,18 +75,18 @@ LAMBDA(src,mem,in,out,
     LET(JUMP,LAMBDA(pos,mem,ptr,in,out,
       F(F,pos,mem,ptr,in,out)
     ),
-    LET(JUMP.NEXT,LAMBDA(mem,ptr,in,out,
+    LET(JUMP_NEXT,LAMBDA(mem,ptr,in,out,
       JUMP(pos+1,mem,ptr,in,out)
     ),
-    LET(JUMP.PASSTHRU,LAMBDA(
-      JUMP.NEXT(mem,ptr,in,out)
+    LET(JUMP_PASSTHRU,LAMBDA(
+      JUMP_NEXT(mem,ptr,in,out)
     ),
 
     LET(PUTCHAR,LAMBDA(
       out&CHAR(INDEX(mem,ptr,1))
     ),
     LET(GETCHAR,LAMBDA(
-      UPDATEARRAY(mem,ptr,1,CODE(CHARAT.HEAD(in)))
+      UPDATEARRAY(mem,ptr,1,CODE(CHARAT_HEAD(in)))
     ),
 
     IF(LEN(src)<pos,
@@ -96,36 +96,36 @@ LAMBDA(src,mem,in,out,
 
       SWITCH(token,
         ">",
-          JUMP.NEXT(mem,ptr+1,in,out),
+          JUMP_NEXT(mem,ptr+1,in,out),
 
         "<",
-          JUMP.NEXT(mem,ptr-1,in,out),
+          JUMP_NEXT(mem,ptr-1,in,out),
 
         "+",
-          JUMP.NEXT(UPDATEARRAY.INCR(mem,ptr,1),ptr,in,out),
+          JUMP_NEXT(UPDATEARRAY_INCR(mem,ptr,1),ptr,in,out),
 
         "-",
-          JUMP.NEXT(UPDATEARRAY.DECR(mem,ptr,1),ptr,in,out),
+          JUMP_NEXT(UPDATEARRAY_DECR(mem,ptr,1),ptr,in,out),
 
         ".",
-          JUMP.NEXT(mem,ptr,in,PUTCHAR()),
+          JUMP_NEXT(mem,ptr,in,PUTCHAR()),
 
         ",",
-          JUMP.NEXT(GETCHAR(),ptr,REMOVE.HEAD(in,1),out),
+          JUMP_NEXT(GETCHAR(),ptr,REMOVE_HEAD(in,1),out),
         
         "[",
           IF(INDEX(mem,ptr,1)=0,
             JUMP(CORRRBRACKET(src,pos),mem,ptr,in,out),
-            JUMP.PASSTHRU()
+            JUMP_PASSTHRU()
           ),
 
         "]",
           IF(INDEX(mem,ptr,1)<>0,
             JUMP(CORRLBRACKET(src,pos),mem,ptr,in,out),
-            JUMP.PASSTHRU()
+            JUMP_PASSTHRU()
           ),
         
-        JUMP.PASSTHRU()
+        JUMP_PASSTHRU()
       )
     ))
   )))))),
