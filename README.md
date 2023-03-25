@@ -12,13 +12,36 @@ https://zenn.dev/u1f992/articles/a99aa870531ec9
 
 ```
 =
-LET(UPDATEARRAY,LAMBDA(base,row,column,value,
+LET(UPDATEARRAY,LAMBDA(base,row,col,val,
   MAKEARRAY(ROWS(base),COLUMNS(base),LAMBDA(r,c,
-    IF(AND(r=row,c=column),
-      value,
+    IF(AND(r=row,c=col),
+      val,
       INDEX(base,r,c)
     )
   ))
+),
+LET(UPDATEARRAY.ADD,LAMBDA(base,row,col,val,
+  UPDATEARRAY(base,row,col,INDEX(base,row,col)+val)
+),
+LET(UPDATEARRAY.INCR,LAMBDA(base,row,col,
+  UPDATEARRAY.ADD(base,row,col,+1)
+),
+LET(UPDATEARRAY.DECR,LAMBDA(base,row,col,
+  UPDATEARRAY.ADD(base,row,col,-1)
+),
+
+LET(CHARAT,LAMBDA(str,pos,
+  MID(str,pos,1)
+),
+LET(CHARAT.HEAD,LAMBDA(str,
+  CHARAT(str,1)
+),
+
+LET(REMOVE,LAMBDA(str,pos,cnt,
+  LEFT(str,pos-1)&RIGHT(str,LEN(str)-(pos+cnt-1))
+),
+LET(REMOVE.HEAD,LAMBDA(str,
+  REMOVE(str,1,1)
 ),
 
 LET(CORRFINDER,LAMBDA(looking_for,corresponding,forward,
@@ -26,7 +49,7 @@ LET(CORRFINDER,LAMBDA(looking_for,corresponding,forward,
 
   LAMBDA(src,pos,
     LET(_,LAMBDA(F,pos,depth,
-      LET(token,MID(src,pos,1),
+      LET(token,CHARAT(src,pos),
 
       SWITCH(token,          
         looking_for,
@@ -47,62 +70,66 @@ LET(CORRFINDER,LAMBDA(looking_for,corresponding,forward,
 LET(CORRRBRACKET,CORRFINDER("]", "[", TRUE),
 LET(CORRLBRACKET,CORRFINDER("[", "]", FALSE),
 
-LET(INTERPRET,LAMBDA(src,input_stream,
-  LET(_,LAMBDA(F,pos,arr,idx,input_stream,output_stream,
-    LET(JUMPTONEXT,LAMBDA(arr,idx,input_stream,output_stream,
-      F(F,pos+1,arr,idx,input_stream,output_stream)
+LAMBDA(src,mem,in,out,
+  LET(_,LAMBDA(F,pos,mem,ptr,in,out,
+    LET(JUMP,LAMBDA(pos,mem,ptr,in,out,
+      F(F,pos,mem,ptr,in,out)
     ),
-    LET(JUMPTORBRACKET,LAMBDA(arr,idx,input_stream,output_stream,
-      F(F,CORRRBRACKET(src,pos),arr,idx,input_stream,output_stream)
+    LET(JUMP.NEXT,LAMBDA(mem,ptr,in,out,
+      JUMP(pos+1,mem,ptr,in,out)
     ),
-    LET(JUMPTOLBRACKET,LAMBDA(arr,idx,input_stream,output_stream,
-      F(F,CORRLBRACKET(src,pos),arr,idx,input_stream,output_stream)
+    LET(JUMP.PASSTHRU,LAMBDA(
+      JUMP.NEXT(mem,ptr,in,out)
     ),
 
-    IF(pos=LEN(src)+1,
-      output_stream,
+    LET(PUTCHAR,LAMBDA(
+      out&CHAR(INDEX(mem,ptr,1))
+    ),
+    LET(GETCHAR,LAMBDA(
+      UPDATEARRAY(mem,ptr,1,CODE(CHARAT.HEAD(in)))
+    ),
+
+    IF(LEN(src)<pos,
+      out,
       
-      LET(token,MID(src,pos,1),
+      LET(token,CHARAT(src,pos),
 
       SWITCH(token,
         ">",
-          JUMPTONEXT(arr,idx+1,input_stream,output_stream),
+          JUMP.NEXT(mem,ptr+1,in,out),
 
         "<",
-          JUMPTONEXT(arr,idx-1,input_stream,output_stream),
+          JUMP.NEXT(mem,ptr-1,in,out),
 
         "+",
-          JUMPTONEXT(UPDATEARRAY(arr,idx,1,INDEX(arr,idx,1)+1),idx,input_stream,output_stream),
+          JUMP.NEXT(UPDATEARRAY.INCR(mem,ptr,1),ptr,in,out),
 
         "-",
-          JUMPTONEXT(UPDATEARRAY(arr,idx,1,INDEX(arr,idx,1)-1),idx,input_stream,output_stream),
+          JUMP.NEXT(UPDATEARRAY.DECR(mem,ptr,1),ptr,in,out),
 
         ".",
-          JUMPTONEXT(arr,idx,input_stream,CONCAT(output_stream,CHAR(INDEX(arr,idx,1)))),
+          JUMP.NEXT(mem,ptr,in,PUTCHAR()),
 
         ",",
-          JUMPTONEXT(UPDATEARRAY(arr,idx,1,CODE(MID(input_stream,1,1))),idx,RIGHT(input_stream,LEN(input_stream)-1),output_stream),
+          JUMP.NEXT(GETCHAR(),ptr,REMOVE.HEAD(in),out),
         
         "[",
-          IF(INDEX(arr,idx,1)=0,
-            JUMPTORBRACKET(arr,idx,input_stream,output_stream),
-            JUMPTONEXT(arr,idx,input_stream,output_stream)
+          IF(INDEX(mem,ptr,1)=0,
+            JUMP(CORRRBRACKET(src,pos),mem,ptr,in,out),
+            JUMP.PASSTHRU()
           ),
 
         "]",
-          IF(INDEX(arr,idx,1)<>0,
-            JUMPTOLBRACKET(arr,idx,input_stream,output_stream),
-            JUMPTONEXT(arr,idx,input_stream,output_stream)
+          IF(INDEX(mem,ptr,1)<>0,
+            JUMP(CORRLBRACKET(src,pos),mem,ptr,in,out),
+            JUMP.PASSTHRU()
           ),
         
-        JUMPTONEXT(arr,idx,input_stream,output_stream)
+        JUMP.PASSTHRU()
       )
     ))
-  )))),
-  _(_,1,MAKEARRAY(32,1,LAMBDA(r,c,0)),1,input_stream,"")
-)),
-
-INTERPRET(B4,B7)
-
-)))))
+  )))))),
+  _(_,1,mem,1,in,out)
+))
+)))))))))))(B4,MAKEARRAY(64,1,LAMBDA(r,c,0)),B7,"")
 ```
