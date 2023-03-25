@@ -40,8 +40,8 @@ LET(CHARAT.HEAD,LAMBDA(str,
 LET(REMOVE,LAMBDA(str,pos,cnt,
   LEFT(str,pos-1)&RIGHT(str,LEN(str)-(pos+cnt-1))
 ),
-LET(REMOVE.HEAD,LAMBDA(str,
-  REMOVE(str,1,1)
+LET(REMOVE.HEAD,LAMBDA(str,cnt,
+  REMOVE(str,1,cnt)
 ),
 
 LET(CORRFINDER,LAMBDA(looking_for,corresponding,forward,
@@ -111,7 +111,7 @@ LAMBDA(src,mem,in,out,
           JUMP.NEXT(mem,ptr,in,PUTCHAR()),
 
         ",",
-          JUMP.NEXT(GETCHAR(),ptr,REMOVE.HEAD(in),out),
+          JUMP.NEXT(GETCHAR(),ptr,REMOVE.HEAD(in,1),out),
         
         "[",
           IF(INDEX(mem,ptr,1)=0,
